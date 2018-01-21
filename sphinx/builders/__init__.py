@@ -19,6 +19,7 @@ from docutils.nodes import Node
 from sphinx.config import Config
 from sphinx.environment import BuildEnvironment, CONFIG_OK, CONFIG_CHANGED_REASON
 from sphinx.environment.adapters.asset import ImageAdapter
+from sphinx.errors import ApplicationError
 from sphinx.errors import SphinxError
 from sphinx.events import EventManager
 from sphinx.io import read_doc
@@ -265,27 +266,33 @@ class Builder:
     def build_specific(self, filenames: List[str]) -> None:
         """Only rebuild as much as needed for changes in the *filenames*."""
         docnames = []  # type: List[str]
+        missing_files = []  # type: List[str]
 
         for filename in filenames:
             filename = path.normpath(path.abspath(filename))
 
-            if not filename.startswith(self.srcdir):
-                logger.warning(__('file %r given on command line is not under the '
-                                  'source directory, ignoring'), filename)
+            if not path.isfile(filename):
+                logger.debug(__('file %r given on command line does not exist, '),
+                             filename)
+                missing_files.append(filename)
                 continue
 
-            if not path.isfile(filename):
-                logger.warning(__('file %r given on command line does not exist, '
-                                  'ignoring'), filename)
+            if not filename.startswith(self.srcdir):
+                logger.debug(__('file %r given on command line is not under the '
+                                'source directory, ignoring'), filename)
                 continue
 
             docname = self.env.path2doc(filename)
             if not docname:
-                logger.warning(__('file %r given on command line is not a valid '
-                                  'document, ignoring'), filename)
+                logger.debug(__('file %r given on command line is not a valid '
+                                'document, ignoring'), filename)
                 continue
 
             docnames.append(docname)
+
+        if missing_files:
+            raise ApplicationError('files were not found in %r: %r' % (
+                self.srcdir, missing_files))
 
         self.compile_specific_catalogs(filenames)
 

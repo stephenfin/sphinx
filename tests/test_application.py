@@ -117,11 +117,7 @@ def test_add_is_parallel_allowed(app, status, warning):
 def test_build_specific(app):
     app.builder.build = Mock()
     filenames = [app.srcdir / 'index.txt',                      # normal
-                 app.srcdir / 'images',                         # without suffix
-                 app.srcdir / 'notfound.txt',                   # not found
                  app.srcdir / 'img.png',                        # unknown suffix
-                 '/index.txt',                                  # external file
-                 app.srcdir / 'subdir',                         # directory
                  app.srcdir / 'subdir/includes.txt',            # file on subdir
                  app.srcdir / 'subdir/../subdir/excluded.txt']  # not normalized
     app.build(False, filenames)
